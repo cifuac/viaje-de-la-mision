@@ -1,247 +1,229 @@
 <!DOCTYPE html>
 <html lang="es">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>Viaje de la misión — El ladrón del rayo</title>
-		<style>
-html, body, #canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b1530">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Viaje de la misión">
+<title>Viaje de la misión — El ladrón del rayo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="index.icon.png">
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png">
+<style>
+html, body { margin: 0; padding: 0; height: 100%; background: #070d1e; overflow: hidden; touch-action: none;
+	overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent; }
+#canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
+#canvas:focus { outline: none; }
+.capa { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+	text-align: center; padding: 24px; box-sizing: border-box; color: #f4ede0; font-family: Georgia, "Times New Roman", serif;
+	background: radial-gradient(ellipse at 50% 35%, #1c2d57 0%, #0b1530 55%, #070d1e 100%); }
+#portada { z-index: 10; }
+#portada .kicker { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: #e2c078; margin-bottom: 10px; }
+#portada h1 { font-weight: 500; font-size: clamp(26px, 6.5vmin, 46px); letter-spacing: .06em; color: #f2d9a0; margin: 0 0 4px;
+	text-transform: uppercase; }
+#portada .sub { font-style: italic; color: rgba(244, 237, 224, .75); font-size: clamp(15px, 3.6vmin, 20px); margin-bottom: 22px; }
+#empezar { font: inherit; font-size: 19px; letter-spacing: .08em; color: #1a1206; background: #e2c078; border: 0;
+	padding: 14px 34px; border-radius: 7px; box-shadow: 0 0 0 1px #9a7639 inset; cursor: pointer; }
+#empezar:active { background: #f2d9a0; }
+#nota { max-width: 560px; margin-top: 16px; font-size: 14px; line-height: 1.45; color: rgba(244, 237, 224, .62); }
+#prueba { display: none; margin-bottom: 14px; font-size: 13px; color: #1a1206; background: #f2d9a0; padding: 4px 10px; border-radius: 4px; }
+#avance { display: none; width: min(420px, 78vw); margin-top: 6px; }
+#avance .barra { height: 6px; border-radius: 3px; background: rgba(226, 192, 120, .18); overflow: hidden; box-shadow: 0 0 0 1px rgba(226, 192, 120, .35); }
+#avance .lleno { height: 100%; width: 0; background: #e2c078; transition: width .2s; }
+#avance .texto { margin-top: 10px; font-size: 15px; color: rgba(244, 237, 224, .8); }
+#girar { z-index: 20; display: none; }
+#girar .tel { width: 46px; height: 80px; border: 3px solid #e2c078; border-radius: 9px; margin-bottom: 22px; animation: girar 2.2s ease-in-out infinite; }
+#girar p { font-size: 19px; margin: 0; }
+@keyframes girar { 0%, 25% { transform: rotate(0deg); } 55%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) { html.tactil #girar { display: flex; } }
+#error { z-index: 30; display: none; }
+#error p { max-width: 560px; font-size: 16px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<canvas id="canvas">Tu navegador no puede mostrar este juego.</canvas>
+<noscript><div class="capa">Este juego necesita JavaScript.</div></noscript>
 
-body {
-	color: white;
-	background-color: black;
-	overflow: hidden;
-	touch-action: none;
-}
+<div id="portada" class="capa">
+	<div id="prueba">VERSIÓN DE PRUEBA · no envía resultados a la planilla</div>
+	<div class="kicker">Prueba de lectura · Lenguaje y Comunicación</div>
+	<h1>El ladrón del rayo</h1>
+	<div class="sub">El viaje de la misión</div>
+	<button id="empezar" type="button">Empezar</button>
+	<div id="avance"><div class="barra"><div class="lleno"></div></div><div class="texto"></div></div>
+	<div id="nota"></div>
+</div>
 
-#canvas {
-	display: block;
-}
+<div id="girar" class="capa"><div class="tel"></div><p>Gira el teléfono para jugar</p></div>
+<div id="error" class="capa"><p></p></div>
 
-#canvas:focus {
-	outline: none;
-}
-
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
-
-#status {
-	background-color: #242424;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
-}
-
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
-
-#status-splash.show-image--false {
-	display: none;
-}
-
-#status-splash.fullsize--true {
-	height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-#status-splash.use-filter--false {
-	image-rendering: pixelated;
-}
-
-#status-progress, #status-notice {
-	display: none;
-}
-
-#status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
-}
-
-#status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
-}
-		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
-
-	</head>
-	<body>
-		<canvas id="canvas">
-			Your browser does not support the canvas tag.
-		</canvas>
-
-		<noscript>
-			Your browser does not support JavaScript.
-		</noscript>
-
-		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
-		</div>
-
-		<script src="index.js"></script>
-		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
-const GODOT_THREADS_ENABLED = false;
+<script src="index.js"></script>
+<script>
+/* Versión para celular (Android y iPhone) del «Viaje de la misión», 26-10-2026.
+ * El paquete del juego va en trozos de menos de 100 MB (GitHub no acepta archivos más grandes):
+ * se bajan en orden a un solo bloque de memoria y se le entregan al motor como «index.pck».
+ * Quedan guardados en el navegador (Cache Storage), así que la segunda vez no se vuelven a bajar;
+ * cada versión nueva del juego borra los trozos de la anterior.
+ * Con «?profesor» en la dirección (o entrando por prueba/) el juego no manda nada a la planilla. */
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const PARTES = ["index.pck.000", "index.pck.001", "index.pck.002", "index.pck.003"];
+const TOTAL = 285286100;
+const VERSION = 'c13c713c7c';
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
-	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
-	const statusNotice = document.getElementById('status-notice');
-
-	let initializing = true;
-	let statusMode = '';
-
-	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
-		if (mode === 'hidden') {
-			statusOverlay.remove();
-			initializing = false;
-			return;
-		}
-		statusOverlay.style.visibility = 'visible';
-		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
-		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
-		statusMode = mode;
-	}
-
-	function setStatusNotice(text) {
-		while (statusNotice.lastChild) {
-			statusNotice.removeChild(statusNotice.lastChild);
-		}
-		const lines = text.split('\n');
-		lines.forEach((line) => {
-			statusNotice.appendChild(document.createTextNode(line));
-			statusNotice.appendChild(document.createElement('br'));
-		});
-	}
-
-	function displayFailureNotice(err) {
-		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('An unknown error occurred.');
-		}
-		setStatusMode('notice');
-		initializing = false;
-	}
-
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
-
-	if (missing.length !== 0) {
-		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			let serviceWorkerRegistrationPromise;
-			try {
-				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
-			} catch (err) {
-				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
-			}
-			// There's a chance that installing the service worker would fix the issue
-			Promise.race([
-				serviceWorkerRegistrationPromise.then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				// For some reason, `getRegistration()` can stall
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).then(() => {
-				// Reload if there was no error.
-				window.location.reload();
-			}).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			});
-		} else {
-			// Display the message as usual
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
-		}
+	const ua = navigator.userAgent;
+	const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
+	const android = /Android/.test(ua);
+	if (ios || android || navigator.maxTouchPoints > 0) document.documentElement.classList.add('tactil');
+	const $ = (id) => document.getElementById(id);
+	if (/(^|[?&])profesor(=|&|$)/i.test(location.search.slice(1))) $('prueba').style.display = 'inline-block';
+	const nota = $('nota');
+	const mb = (n) => Math.round(n / 1048576);
+	const descarga = mb(TOTAL + (GODOT_CONFIG.fileSizes['index.wasm'] || 0));
+	if (ios) {
+		nota.textContent = 'La primera vez baja unos ' + descarga + ' MB: conviene estar en wifi. '
+			+ 'Para jugar a pantalla completa, antes de empezar: botón Compartir → «Agregar a pantalla de inicio», y ábrelo desde ahí.';
+	} else if (android) {
+		nota.textContent = 'La primera vez baja unos ' + descarga + ' MB: conviene estar en wifi. '
+			+ 'El juego se pone a pantalla completa y en horizontal.'
+			+ (navigator.deviceMemory && navigator.deviceMemory < 4
+				? ' Este teléfono tiene poca memoria: puede que el juego se cierre. Cierra las demás aplicaciones antes de empezar.' : '');
 	} else {
-		setStatusMode('progress');
-		// El paquete del juego va en trozos de 90 MB (GitHub no acepta archivos de más de 100 MB):
-		// se bajan en orden, se unen en memoria y el motor arranca con el paquete entero.
-		const PARTES = ["index.pck.000", "index.pck.001", "index.pck.002", "index.pck.003", "index.pck.004"];
-		const TOTAL = 427178612;
-		const aviso = document.createElement('div');
-		aviso.style.cssText = 'position:absolute;bottom:16%;left:0;right:0;text-align:center;font:16px Georgia,serif;color:#e8d9b0';
-		document.getElementById('status').appendChild(aviso);
-		async function bajarPaquete() {
-			const trozos = [];
-			let llevados = 0;
-			for (const p of PARTES) {
-				const r = await fetch(p);
-				if (!r.ok) throw new Error('No se pudo bajar ' + p + ' (' + r.status + ')');
-				const lector = r.body.getReader();
-				while (true) {
-					const { done, value } = await lector.read();
-					if (done) break;
-					trozos.push(value);
-					llevados += value.length;
-					statusProgress.value = llevados;
-					statusProgress.max = TOTAL;
-					aviso.textContent = 'Cargando el viaje… ' + Math.round(llevados / 1048576) + ' de ' + Math.round(TOTAL / 1048576) + ' MB';
-				}
-			}
-			aviso.textContent = 'Preparando el juego…';
-			return await new Blob(trozos).arrayBuffer();
-		}
-		// el motor pide «index.pck» por la red: se le da el paquete ya unido, con ese mismo nombre
-		const precargar = engine.preloadFile.bind(engine);
-		bajarPaquete().then((paquete) => (engine.preloadFile = (f, p) => precargar(p === 'index.pck' ? paquete : f, p),
-			engine.startGame({
-			'onProgress': function (current, total) {
-				if (current > 0 && total > 0) {
-					statusProgress.value = current;
-					statusProgress.max = total;
-				}
-			},
-		}))).then(() => {
-			setStatusMode('hidden');
-		}, displayFailureNotice);
+		nota.textContent = 'Esta versión está hecha para celulares (Android o iPhone): ábrela en tu teléfono.';
 	}
-}());
-		</script>
-	</body>
-</html>
 
+	function error(texto) {
+		$('error').querySelector('p').textContent = texto;
+		$('error').style.display = 'flex';
+	}
+	const faltan = Engine.getMissingFeatures({ threads: false });
+	if (faltan.length) {
+		$('empezar').style.display = 'none';
+		error('Este navegador no puede abrir el juego (le falta: ' + faltan.join(', ') + '). '
+			+ 'Prueba con Chrome en Android o con Safari en iPhone, actualizados.');
+		return;
+	}
+
+	// Los trozos guardados de esta versión (y se borran los de versiones anteriores).
+	async function guardados() {
+		try {
+			if (typeof caches === 'undefined') return null;
+			for (const nombre of await caches.keys()) {
+				if (nombre.startsWith('viaje-') && nombre !== 'viaje-' + VERSION) await caches.delete(nombre);
+			}
+			return await caches.open('viaje-' + VERSION);
+		} catch (e) {
+			return null;
+		}
+	}
+
+	async function bajarPaquete(avance) {
+		const datos = new Uint8Array(TOTAL);
+		let llevados = 0;
+		const cache = await guardados();
+		for (const parte of PARTES) {
+			const direccion = parte + '?v=' + VERSION;
+			let r = null;
+			if (cache) {
+				try { r = await cache.match(direccion); } catch (e) { r = null; }
+			}
+			let guardando = null;
+			if (!r) {
+				r = await fetch(direccion);
+				if (!r.ok) throw new Error('No se pudo bajar ' + parte + ' (error ' + r.status + ').');
+				if (cache) guardando = cache.put(direccion, r.clone()).catch(() => {});
+			}
+			const lector = r.body.getReader();
+			for (;;) {
+				const { done, value } = await lector.read();
+				if (done) break;
+				if (llevados + value.length > TOTAL) throw new Error('El juego bajó mal.');
+				datos.set(value, llevados);
+				llevados += value.length;
+				avance(llevados);
+			}
+			if (guardando) await guardando;
+		}
+		if (llevados !== TOTAL) throw new Error('El juego bajó incompleto (' + mb(llevados) + ' de ' + mb(TOTAL) + ' MB).');
+		return datos.buffer;
+	}
+
+	function pantallaCompleta() {
+		if (!android || !document.documentElement.requestFullscreen) return;
+		document.documentElement.requestFullscreen({ navigationUI: 'hide' })
+			.then(() => screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : null)
+			.catch(() => { /* no se pudo: se juega igual */ });
+	}
+
+	// El campo del nombre escribe en una entrada oculta del motor: sin autocompletar (en Android, la
+	// barra de Chrome con llaves, tarjetas y direcciones tapaba el campo) y con mayúscula en cada palabra.
+	// En el iPhone la entrada se ve, encima del campo (el juego la pone ahí): al abrirse el teclado,
+	// Safari corre y achica la página a su manera, pero siempre deja a la vista la caja en que se
+	// escribe, así que el estudiante ve lo que escribe (emulador, 27-10-2026).
+	function prepararEscritura() {
+		for (const e of document.querySelectorAll('input, textarea')) {
+			e.setAttribute('autocomplete', 'off');
+			e.setAttribute('autocorrect', 'off');
+			e.setAttribute('autocapitalize', 'words');
+			e.setAttribute('spellcheck', 'false');
+			if (ios) {
+				Object.assign(e.style, {
+					zIndex: '40', background: '#0b1530', color: '#f4ede0', caretColor: '#e2c078',
+					border: '1px solid #e2c078', borderRadius: '6px', padding: '0 12px', boxSizing: 'border-box',
+					font: '17px Georgia, "Times New Roman", serif', outline: 'none',
+				});
+			}
+		}
+	}
+
+	// Ya jugando, el gesto de «atrás» no saca del juego por accidente.
+	function quedarseEnElJuego() {
+		history.pushState(null, '', location.href);
+		addEventListener('popstate', () => history.pushState(null, '', location.href));
+	}
+
+	$('empezar').addEventListener('click', async () => {
+		$('empezar').style.display = 'none';
+		nota.style.display = 'none';
+		$('avance').style.display = 'block';
+		const lleno = $('avance').querySelector('.lleno');
+		const texto = $('avance').querySelector('.texto');
+		pantallaCompleta();
+		if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+		try {
+			// el motor (index.wasm) baja a la vez que el paquete
+			Engine.load(GODOT_CONFIG.executable, GODOT_CONFIG.fileSizes['index.wasm']);
+			texto.textContent = 'Cargando el viaje…';
+			let paquete = await bajarPaquete((n) => {
+				lleno.style.width = (100 * n / TOTAL).toFixed(1) + '%';
+				texto.textContent = 'Cargando el viaje… ' + mb(n) + ' de ' + mb(TOTAL) + ' MB';
+			});
+			texto.textContent = 'Preparando el juego…';
+			const precargar = engine.preloadFile.bind(engine);
+			engine.preloadFile = (f, p) => {
+				if (p === 'index.pck' && paquete) {
+					const d = paquete;
+					paquete = null;   // el motor hace su propia copia: esta se suelta
+					return precargar(d, p);
+				}
+				return precargar(f, p);
+			};
+			await engine.startGame();
+			$('portada').remove();
+			prepararEscritura();
+			quedarseEnElJuego();
+		} catch (e) {
+			console.error(e);
+			error('No se pudo abrir el juego. ' + (e && e.message ? e.message : e)
+				+ ' Cierra otras pestañas o aplicaciones y vuelve a cargar la página.');
+		}
+	});
+}());
+</script>
+</body>
+</html>
